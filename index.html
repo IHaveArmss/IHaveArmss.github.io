@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greenhouse Solver (High Accuracy)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { margin-bottom: 10px; }
+        p { color: #aaa; margin-bottom: 20px; }
+
+        .container {
+            display: flex;
+            gap: 50px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid-label {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mini-btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        .mini-btn:hover { opacity: 0.8; }
+        .btn-red { background-color: #e74c3c; }
+        .btn-green { background-color: #2ecc71; color: #1a1a1a; font-weight: bold; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 2px;
+            background-color: #333;
+            border: 5px solid #444;
+            border-radius: 4px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.1s;
+        }
+
+        /* Input Grid Styles */
+        .cell.green { background-color: #2ecc71; color: #1a1a1a; } /* Empty (0) */
+        .cell.red { background-color: #e74c3c; color: white; }     /* Wall (-1) */
+
+        /* Output Grid Styles */
+        .cell.melon { background-color: #27ae60; color: white; }
+        .cell.pumpkin { background-color: #d35400; color: white; }
+        .cell.empty-res { background-color: #2c3e50; }
+        .cell.wall-res { background-color: #333; }
+
+        .main-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .main-btn:active { transform: scale(0.95); }
+        .main-btn:disabled { background-color: #555; cursor: wait; }
+
+        #stats {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Greenhouse Solver</h1>
+    <p>Click cells to toggle between Wall (-1) and Empty (0).</p>
+
+    <div class="container">
+        <div class="grid-container">
+            <div class="grid-label">Input Layout</div>
+            
+            <div class="controls">
+                <button class="mini-btn btn-red" onclick="setAll(-1)">Set All Walls</button>
+                <button class="mini-btn btn-green" onclick="setAll(0)">Set All Empty</button>
+            </div>
+
+            <div id="inputGrid" class="grid"></div>
+        </div>
+
+        <div class="grid-container">
+            <div class="grid-label">Solution</div>
+            <div class="controls" style="visibility: hidden;">
+                <button class="mini-btn">Spacer</button>
+            </div>
+            <div id="outputGrid" class="grid"></div>
+        </div>
+    </div>
+
+    <button id="solveBtn" class="main-btn" onclick="runSolver()">Calculate Optimization</button>
+    <div id="stats"></div>
+
+<script>
+    const ROWS = 10;
+    const COLS = 10;
+    
+    // Arrays representing the grids
+    let inputData = Array(ROWS).fill().map(() => Array(COLS).fill(-1));
+    let resultGrid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+    let minItems = 999;
+    
+    // Neighbors lookup
+    const rowMove = [-1, -1, -1, 0, 0, 1, 1, 1];
+    const colMove = [-1, 0, 1, -1, 1, -1, 0, 1];
+
+    // --- UI FUNCTIONS ---
+
+    function initGrids() {
+        const inputDiv = document.getElementById('inputGrid');
+        const outputDiv = document.getElementById('outputGrid');
+
+        inputDiv.innerHTML = '';
+        outputDiv.innerHTML = '';
+
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                // Input Cell
+                const iCell = document.createElement('div');
+                iCell.id = `in-${r}-${c}`;
+                iCell.className = 'cell red'; 
+                iCell.innerText = 'X';
+                iCell.onclick = () => toggleCell(r, c);
+                inputDiv.appendChild(iCell);
+
+                // Output Cell
+                const oCell = document.createElement('div');
+                oCell.className = 'cell empty-res';
+                oCell.id = `out-${r}-${c}`;
+                outputDiv.appendChild(oCell);
+            }
+        }
+    }
+
+    function toggleCell(r, c) {
+        const el = document.getElementById(`in-${r}-${c}`);
+        if (inputData[r][c] === 0) {
+            inputData[r][c] = -1;
+            el.className = 'cell red';
+            el.innerText = 'X';
+        } else {
+            inputData[r][c] = 0;
+            el.className = 'cell green';
+            el.innerText = '';
+        }
+    }
+
+    function setAll(val) {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                inputData[r][c] = val;
+                const el = document.getElementById(`in-${r}-${c}`);
+                if (val === -1) {
+                    el.className = 'cell red';
+                    el.innerText = 'X';
+                } else {
+                    el.className = 'cell green';
+                    el.innerText = '';
+                }
+            }
+        }
+    }
+
+    function renderOutput(items) {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = document.getElementById(`out-${r}-${c}`);
+                const val = resultGrid[r][c];
+                cell.className = 'cell';
+                cell.innerText = '';
+
+                if (val === -1) {
+                    cell.classList.add('wall-res');
+                    cell.innerText = 'X';
+                } else if (val === 1) {
+                    cell.classList.add('melon');
+                    cell.innerText = 'M';
+                } else if (val === 2) {
+                    cell.classList.add('pumpkin');
+                    cell.innerText = 'P';
+                } else {
+                    cell.classList.add('empty-res');
+                }
+            }
+        }
+        document.getElementById('stats').innerText = `Minimum Items Needed: ${items}`;
+    }
+
+    // --- SOLVER ALGORITHM ---
+
+    function runSolver() {
+        const btn = document.getElementById('solveBtn');
+        btn.disabled = true;
+        btn.innerText = "Calculating...";
+        document.getElementById('stats').innerText = "Running algorithm...";
+
+        setTimeout(() => {
+            const start = performance.now();
+            
+            minItems = 999;
+            // NOTE: Memoization is DISABLED to ensure 100% accuracy for small maps.
+            
+            // Create working copy
+            let workingGrid = inputData.map(row => [...row]);
+            
+            solveTheGrid(0, 0, workingGrid);
+
+            const end = performance.now();
+            console.log(`Time: ${(end - start).toFixed(2)}ms`);
+
+            renderOutput(minItems);
+            btn.disabled = false;
+            btn.innerText = "Calculate Optimization";
+        }, 50);
+    }
+
+    function isSatisfied(r, c, grid) {
+        if (grid[r][c] !== 0) return true; // Walls/Items don't need neighbors
+
+        let hasMelon = false;
+        let hasPumpkin = false;
+
+        for (let k = 0; k < 8; k++) {
+            let nr = r + rowMove[k];
+            let nc = c + colMove[k];
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                if (grid[nr][nc] === 1) hasMelon = true;
+                if (grid[nr][nc] === 2) hasPumpkin = true;
+            }
+        }
+        return hasMelon && hasPumpkin;
+    }
+
+    function checkEverything(grid) {
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                if (!isSatisfied(i, j, grid)) return false;
+            }
+        }
+        return true;
+    }
+
+    function solveTheGrid(index, itemCount, grid) {
+        // Bound pruning: Stop if we already have a better solution
+        if (itemCount >= minItems) return;
+
+        // Base Case: End of Grid
+        if (index >= ROWS * COLS) {
+            if (checkEverything(grid)) {
+                minItems = itemCount;
+                // Save Result
+                for(let i=0; i<ROWS; i++) {
+                    for(let j=0; j<COLS; j++) {
+                        resultGrid[i][j] = grid[i][j];
+                    }
+                }
+            }
+            return;
+        }
+
+        let r = Math.floor(index / COLS);
+        let c = index % COLS;
+
+        // --- PRUNING 1: Check Diagonal Back (r-1, c-1) ---
+        // The cell at (r-1, c-1) loses its last chance to get a neighbor now.
+        if (r > 0 && c > 0) {
+            let pr = r - 1;
+            let pc = c - 1;
+            
+            // Only check if it's an Empty spot (0)
+            if (grid[pr][pc] === 0) {
+                let hasMelon = false;
+                let hasPumpkin = false;
+                
+                for (let k = 0; k < 8; k++) {
+                    let nr = pr + rowMove[k];
+                    let nc = pc + colMove[k];
+                    if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                        if (grid[nr][nc] === 1) hasMelon = true;
+                        if (grid[nr][nc] === 2) hasPumpkin = true;
+                    }
+                }
+
+                // If missing BOTH, it's impossible (we can't be both at once)
+                if (!hasMelon && !hasPumpkin) return;
+
+                // If missing Melon, current cell MUST be Melon
+                if (!hasMelon) {
+                    if (grid[r][c] === -1) return; // Wall can't help
+                    grid[r][c] = 1;
+                    solveTheGrid(index + 1, itemCount + 1, grid);
+                    grid[r][c] = 0;
+                    return;
+                }
+                // If missing Pumpkin, current cell MUST be Pumpkin
+                if (!hasPumpkin) {
+                    if (grid[r][c] === -1) return;
+                    grid[r][c] = 2;
+                    solveTheGrid(index + 1, itemCount + 1, grid);
+                    grid[r][c] = 0;
+                    return;
+                }
+            }
+        }
+
+        // --- PRUNING 2: End of Previous Row Check ---
+        if (c === 0 && r > 1) {
+            let pr = r - 2;
+            let pc = COLS - 1;
+            if (!isSatisfied(pr, pc, grid)) return;
+        }
+
+        // --- WALL SKIP ---
+        if (grid[r][c] === -1) {
+            solveTheGrid(index + 1, itemCount, grid);
+            return;
+        }
+
+        // --- PRUNING 3: Future Feasibility ---
+        // Can we legally place a 0 (Empty) here?
+        let canBeZero = true;
+        
+        let mCount = 0;
+        let pCount = 0;
+        let futureNeighbors = 0; 
+
+        for (let k = 0; k < 8; k++) {
+            let nr = r + rowMove[k];
+            let nc = c + colMove[k];
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                // If it's a fixed item
+                if (grid[nr][nc] === 1) mCount++;
+                else if (grid[nr][nc] === 2) pCount++;
+                
+                // If it is a FUTURE cell (index > current) AND not a known wall
+                // We use inputData to check walls because grid has temporary values
+                else if ((nr * COLS + nc) > index && inputData[nr][nc] !== -1) {
+                    futureNeighbors++;
+                }
+            }
+        }
+
+        // To be empty, we need 1 Melon AND 1 Pumpkin nearby.
+        if (mCount === 0 && futureNeighbors < 1) canBeZero = false;
+        if (pCount === 0 && futureNeighbors < 1) canBeZero = false;
+        // If we have neither, we need at least 2 future neighbors (or 1 that provides both, but that's impossible)
+        if (mCount === 0 && pCount === 0 && futureNeighbors < 2) canBeZero = false;
+
+
+        // --- RECURSION STEPS ---
+        
+        // 1. Try Empty (0) - Prioritize for max efficiency
+        if (canBeZero) {
+            grid[r][c] = 0;
+            solveTheGrid(index + 1, itemCount, grid);
+        }
+
+        // 2. Try Melon (1)
+        grid[r][c] = 1;
+        solveTheGrid(index + 1, itemCount + 1, grid);
+
+        // 3. Try Pumpkin (2)
+        grid[r][c] = 2;
+        solveTheGrid(index + 1, itemCount + 1, grid);
+
+        // Backtrack
+        grid[r][c] = 0;
+    }
+    
+    // Init
+    initGrids();
+</script>
+</body>
+</html>
