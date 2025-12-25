@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tools Hub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+
+        p {
+            color: #aaa;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .menu-btn {
+            display: block;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+
+        /* Style for the Active Tool (Greenhouse) */
+        .btn-active {
+            background-color: #2ecc71;
+            color: #1a1a1a;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-active:hover {
+            background-color: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+        }
+
+        /* Style for Future Tools (Disabled look) */
+        .btn-future {
+            background-color: #333;
+            color: #777;
+            border: 2px dashed #444;
+            cursor: not-allowed; /* Shows a 'stop' symbol on hover */
+        }
+
+        /* Optional: If you want the future buttons to be clickable later, 
+           you just change their class from 'btn-future' to 'btn-active' 
+           or a new color class */
+        
+        .footer {
+            margin-top: 50px;
+            color: #555;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tool Hub</h1>
+    <p>Select a utility to begin</p>
+
+    <div class="menu-container">
+        <a href="greenhouse.html" class="menu-btn btn-active">
+            Greenhouse Solver
+        </a>
+
+        <div class="menu-btn btn-future">
+            Coming Soon
+        </div>
+
+        <div class="menu-btn btn-future">
+            Coming Soon
+        </div>
+
+        <div class="menu-btn btn-future">
+            Coming Soon
+        </div>
+
+        <div class="menu-btn btn-future">
+            Coming Soon
+        </div>
+    </div>
+
+    <div class="footer">Hosted on GitHub Pages</div>
+
+</body>
+</html>
