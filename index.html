@@ -50,7 +50,6 @@
             border: 2px solid transparent;
         }
 
-        /* Style for the Active Tool (Greenhouse) */
         .btn-active {
             background-color: #2ecc71;
             color: #1a1a1a;
@@ -63,53 +62,99 @@
             box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
         }
 
-        /* Style for Future Tools (Disabled look) */
         .btn-future {
             background-color: #333;
             color: #777;
             border: 2px dashed #444;
-            cursor: not-allowed; /* Shows a 'stop' symbol on hover */
+            cursor: not-allowed;
         }
 
-        /* Optional: If you want the future buttons to be clickable later, 
-           you just change their class from 'btn-future' to 'btn-active' 
-           or a new color class */
-        
         .footer {
             margin-top: 50px;
             color: #555;
             font-size: 0.8rem;
         }
+
+        .secret-help-btn {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #444;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            border: 2px solid #666;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+            z-index: 100;
+        }
+
+        .secret-help-btn:hover {
+            background-color: #555;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+        }
     </style>
 </head>
 <body>
 
-    <h1>Tool Hub</h1>
-    <p>Select a utility to begin</p>
+<h1>Tool Hub</h1>
+<p>Select a utility to begin</p>
 
-    <div class="menu-container">
-        <a href="greenhouse.html" class="menu-btn btn-active">
-            Greenhouse Solver
-        </a>
+<div class="menu-container">
+    <a href="greenhouse.html" class="menu-btn btn-active">
+        Greenhouse Solver
+    </a>
 
-        <div class="menu-btn btn-future">
-            Coming Soon
-        </div>
-
-        <div class="menu-btn btn-future">
-            Coming Soon
-        </div>
-
-        <div class="menu-btn btn-future">
-            Coming Soon
-        </div>
-
-        <div class="menu-btn btn-future">
-            Coming Soon
-        </div>
+    <div class="menu-btn btn-future">
+        Coming Soon
     </div>
 
-    <div class="footer">Hosted on GitHub Pages</div>
+    <div class="menu-btn btn-future">
+        Coming Soon
+    </div>
+
+    <div class="menu-btn btn-future">
+        Coming Soon
+    </div>
+
+    <div class="menu-btn btn-future">
+        Coming Soon
+    </div>
+</div>
+
+<div class="footer">Hosted on GitHub Pages</div>
+
+<div class="secret-help-btn" onclick="askSecretDate()">?</div>
+
+<script>
+    function askSecretDate() {
+        const answer = prompt("Enter the special date in dd/mm/yyyy:");
+        if (!answer) return;
+
+        const normalized = answer.trim().toLowerCase();
+        const validAnswers = [
+            "11/07/2024",
+            "11-07-2024",
+            "11.07.2024",
+            "31.08.2006",
+            "14.02.2026"
+        ];
+
+        if (validAnswers.includes(normalized)) {
+            window.location.href = "valentine.html";
+        } else {
+            alert("Hmm, that doesn't seem like the right date.");
+        }
+    }
+</script>
 
 </body>
 </html>
